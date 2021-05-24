@@ -12,13 +12,14 @@ import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import it.polito.tdp.PremierLeague.db.PremierLeagueDAO;
 
 public class Model {
 	PremierLeagueDAO dao;
-	SimpleWeightedGraph <Player, DefaultWeightedEdge>grafo;
+	SimpleDirectedWeightedGraph <Player, DefaultWeightedEdge>grafo;
 	Map <Integer, Player> idMap;
 	List <Player> migliore;
 	int bestDegree=0;
@@ -29,7 +30,7 @@ public class Model {
 	
 	public void creaGrafo(double goal) {
 		idMap= new HashMap <Integer,Player>();
-		grafo= new SimpleWeightedGraph <Player, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		grafo= new SimpleDirectedWeightedGraph <Player, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		dao.getVertici(goal, idMap);
 		Graphs.addAllVertices(this.grafo, idMap.values());
 		for(Adiacenza a: dao.getAdiacenze(idMap)) {
@@ -126,7 +127,7 @@ public class Model {
 			for(DefaultWeightedEdge e: this.grafo.incomingEdgesOf(p)) {
 				pesoTolgo=(int) (pesoTolgo+this.grafo.getEdgeWeight(e));
 			}
-			grado=pesoSomma-pesoTolgo;
+			grado=grado+pesoSomma-pesoTolgo;
 		}
 		return grado;
 	}

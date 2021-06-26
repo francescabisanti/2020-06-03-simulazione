@@ -8,8 +8,9 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.PremierLeague.model.Avversari;
 import it.polito.tdp.PremierLeague.model.Model;
-import it.polito.tdp.PremierLeague.model.Opponents;
+
 import it.polito.tdp.PremierLeague.model.Player;
 import it.polito.tdp.PremierLeague.model.TopPlayer;
 import javafx.event.ActionEvent;
@@ -49,58 +50,66 @@ public class FXMLController {
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	this.txtResult.clear();
-    	String num= this.txtGoals.getText();
-    	double goal;
+    	String gS= this.txtGoals.getText();
+    	Double goals;
     	try {
-    		goal= Double.parseDouble(num);
-    	}catch(NumberFormatException e ) {
-    		this.txtResult.setText("Inserisci un valore numerico!");
+    		goals=Double.parseDouble(gS);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserisci un numero di goal valido!");
     		return;
     	}
+    	if(gS.equals("")) {
+    		this.txtResult.setText("Compila il campo di goals!");
+    		return;
+    		
+    	}
+    	this.model.creaGrafo(goals);
+    	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
+    	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
     	
-    	this.model.creaGrafo(goal);
-    	this.txtResult.appendText("GRAFO CREATO \n ");
-    	this.txtResult.appendText("#VERTICI: "+this.model.numeVertici()+"\n");
-    	this.txtResult.appendText("#ARCHI: "+this.model.numArchi()+"\n");
+    	
     }
 
     @FXML
     void doDreamTeam(ActionEvent event) {
     	this.txtResult.clear();
-    	/*for(Player p: this.model.getGrafo().vertexSet()) {
-    	this.txtResult.appendText(p.toString()+"\n");
-    	}*/
-    	if(this.model.getGrafo() == null) {
-    		txtResult.clear();
-    		txtResult.appendText("Crea prima il grafo!\n");
+    	String kS= this.txtK.getText();
+    	int k;
+    	try {
+    		k=Integer.parseInt(kS);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserisci un valore numerico valido!");
     		return;
     	}
-    	
-    	String kS= this.txtK.getText();
-    	int k=Integer.parseInt(kS);
-    	List <Player> dream=this.model.trovaSquadraVincente(k);
-    	
-    	for(Player p:dream) {
+    	if(kS==null) {
+    		this.txtResult.setText("Inserisci un valore dei goals!");
+    		return;
+    	}
+    	List <Player> dream= this.model.trovaComboMigliore(k);
+    	for(Player p: dream) {
     		this.txtResult.appendText(p.toString()+"\n");
     	}
-    	this.txtResult.appendText("GRADO: "+this.model.gradoTitolarita(dream));
+    	this.txtResult.appendText("Grado titolarità: "+this.model.calcoloGrado(dream));
+    	
+    	
+    	
+    	
     }
 
     @FXML
     void doTopPlayer(ActionEvent event) {
-    	txtResult.clear();
-    	TopPlayer topPlayer = this.model.getTopPlayer();
-    	if(topPlayer == null) {
-    		txtResult.appendText("Crea il grafo!");
+    	this.txtResult.clear();
+    	if(model.getGrafo()==null) {
+    		this.txtResult.setText("Devi prima creare il grafo");
     		return;
+    		
+    	}
+    	TopPlayer p= model.migliore();
+    	this.txtResult.appendText("TOP PLAYER: "+p.getGiocatore().getPlayerID()+" "+p.getGiocatore().getName()+"\n AVVERSARI BATTUTI: \n");
+    	for(Avversari a:p.getAvversari()) {
+    		this.txtResult.appendText(a.toString());
     	}
     	
-    	txtResult.appendText("TOP PLAYER: " + topPlayer.getTopPlayer().toString());
-    	txtResult.appendText("\n\nAVVERSARI BATTUTI:\n");
-    	
-    	for(Opponents o : topPlayer.getOpponenti()) {
-    		txtResult.appendText(o.toString() + "\n");
-    	}
 
     }
 

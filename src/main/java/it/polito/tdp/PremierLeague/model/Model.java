@@ -18,121 +18,137 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import it.polito.tdp.PremierLeague.db.PremierLeagueDAO;
 
 public class Model {
-	PremierLeagueDAO dao;
 	SimpleDirectedWeightedGraph <Player, DefaultWeightedEdge>grafo;
-	Map <Integer, Player> idMap;
 	List <Player> migliore;
-	int bestDegree=0;
+	int gradoMigliore;
+	PremierLeagueDAO dao;
+	Map <Integer, Player> idMap;
+	
 	public Model() {
 		dao= new PremierLeagueDAO();
-		
+		idMap=new HashMap <Integer, Player>();
+		dao.listAllPlayers(idMap);
 	}
 	
-	public void creaGrafo(double goal) {
-		idMap= new HashMap <Integer,Player>();
+	public void creaGrafo (double goal) {
 		grafo= new SimpleDirectedWeightedGraph <Player, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		dao.getVertici(goal, idMap);
-		Graphs.addAllVertices(this.grafo, idMap.values());
-		for(Adiacenza a: dao.getAdiacenze(idMap)) {
-			if(grafo.vertexSet().contains(a.getP1())&&grafo.vertexSet().contains(a.getP2())) {
-				if(a.getPeso()>0) {
-					Graphs.addEdgeWithVertices(this.grafo, a.getP1(), a.getP2(), a.getPeso());
-					
-				}
-				else if(a.getPeso()<0) {
-					double peso=((double)-1)*(a.getPeso());
-					Graphs.addEdgeWithVertices(this.grafo, a.getP2(), a.getP1(), peso);
-					
-				}
+		Graphs.addAllVertices(this.grafo, dao.getVertici(goal, idMap));
+		for(Adiacenza a: dao.getAdiacenze(goal, idMap)) {
+			if(grafo.containsVertex(a.getP1())&&grafo.containsVertex(a.getP2())) {
+				Graphs.addEdge(this.grafo, a.getP1(), a.getP2(), a.getPeso());
 			}
 		}
+			
 	}
 	
-	public TopPlayer getTopPlayer() {
-		if(grafo== null)
-			return null;
-		
-		Player best = null;
-		Integer maxDegree = Integer.MIN_VALUE;
-		for(Player p : grafo.vertexSet()) {
-			if(grafo.outDegreeOf(p) > maxDegree) {
-				maxDegree = grafo.outDegreeOf(p);
-				best = p;
+	public TopPlayer migliore() {
+		Double gradoOut=0.0;
+		List <Avversari> result= new ArrayList <Avversari>();
+		Player migliore=null;
+		for(Player p: grafo.vertexSet()) {
+			if(grafo.outDegreeOf(p)>gradoOut) {
+				gradoOut=(double) grafo.outDegreeOf(p);
+				migliore=p;
 			}
+			
 		}
-		
-		TopPlayer topPlayer = new TopPlayer();
-		topPlayer.setTopPlayer(best);
-		
-		List<Opponents> opponents = new ArrayList<>();
-		for(DefaultWeightedEdge edge : grafo.outgoingEdgesOf(topPlayer.getTopPlayer())) {
-			opponents.add(new Opponents(grafo.getEdgeTarget(edge), (int) grafo.getEdgeWeight(edge)));
+		for(DefaultWeightedEdge e: grafo.outgoingEdgesOf(migliore)) {
+			Player avversario= Graphs.getOppositeVertex(grafo, e, migliore);
+			Double peso= grafo.getEdgeWeight(grafo.getEdge(migliore, avversario));
+			Avversari a= new Avversari(avversario, peso);
+			result.add(a);
 		}
-		Collections.sort(opponents);
-		topPlayer.setOpponenti(opponents);
-		return topPlayer;
-		
+		Collections.sort(result);
+		TopPlayer t= new TopPlayer (migliore, result);
+		return t;
 	}
-	
-	public int numeVertici() {
-		return this.grafo.vertexSet().size();
-	}
-	public int numArchi() {
-		return this.grafo.edgeSet().size();
-	}
-	
-	
-	public List <Player> trovaSquadraVincente(int k){
-		this.bestDegree=0;
-		migliore= new LinkedList <Player>();
-		List <Player> parziale= new ArrayList <Player>();
+	public List <Player> trovaComboMigliore(int k){
+		this.migliore= new ArrayList <Player>();
+		this.gradoMigliore=0;
+		List <Player> parziale= new ArrayList <>();
 		
-		cerca(parziale,new ArrayList<Player>(this.grafo.vertexSet()),k);
-		
+		cerca(parziale, k, new ArrayList <Player>(this.grafo.vertexSet()));
 		return migliore;
 	}
-
-	private void cerca(List<Player> parziale, List <Player> giocatori, int k) {
-		//caso terminale
-        //--> parziale.size==k
+	
+	
+	private void cerca(List<Player> parziale, int k, List <Player>giocatori) {
+		// TODO Auto-generated method stub
 		if(parziale.size()==k) {
-			int grado=this.gradoTitolarita(parziale);
-			if(grado>bestDegree) {
-				migliore= new ArrayList<>(parziale);
-				this.bestDegree=grado;
-				
-			}
-			return;
+		if(this.calcoloGrado(parziale)>this.calcoloGrado(migliore)) {
+			migliore=new ArrayList<>(parziale);
+			this.gradoMigliore=calcoloGrado(parziale);
+		}
+		return;
+		
 		}
 		for(Player p: giocatori) {
 			if(!parziale.contains(p)) {
 				parziale.add(p);
-				List<Player> restanti = new ArrayList<>(giocatori);
+				List<Player>restanti= new ArrayList <Player>(giocatori);
 				restanti.removeAll(Graphs.successorListOf(grafo, p));
-				this.cerca(parziale, restanti,k);
+				cerca(parziale, k, restanti);
 				parziale.remove(p);
 			}
 		}
 		
 	}
 	
-	public int gradoTitolarita(List <Player> parziale) {
+	public Player gradoTitMax() {
 		int grado=0;
-		for(Player p:parziale) {
-			int pesoSomma=0;
-			int pesoTolgo=0;
-			for(DefaultWeightedEdge e: this.grafo.outgoingEdgesOf(p)) {
-				pesoSomma=(int) (pesoSomma+this.grafo.getEdgeWeight(e));
+		int gradoOut=0;
+		int gradoIn=0;
+		int gradoMax=0;
+		Player migliore=null;
+		for(Player p: grafo.vertexSet()) {
+			for(DefaultWeightedEdge e : grafo.outgoingEdgesOf(p)) {
+				gradoOut=(int) (gradoOut+grafo.getEdgeWeight(e));
 			}
-			for(DefaultWeightedEdge e: this.grafo.incomingEdgesOf(p)) {
-				pesoTolgo=(int) (pesoTolgo+this.grafo.getEdgeWeight(e));
+			for(DefaultWeightedEdge ee: grafo.incomingEdgesOf(p)) {
+				gradoIn=(int) (gradoIn+grafo.getEdgeWeight(ee));
 			}
-			grado=grado+pesoSomma-pesoTolgo;
+			grado= grado+gradoOut-gradoIn;
+			if(grado>gradoMax) {
+				gradoMax=grado;
+				migliore=p;
+			}
+			
+		}
+		return migliore;
+	}
+	
+	public int calcoloGrado(List<Player>lista) {
+		int grado=0;
+		int gradoOut=0;
+		int gradoIn=0;
+		for(Player p: lista) {
+			for(DefaultWeightedEdge e : grafo.outgoingEdgesOf(p)) {
+				gradoOut=(int) (gradoOut+grafo.getEdgeWeight(e));
+			}
+			for(DefaultWeightedEdge ee: grafo.incomingEdgesOf(p)) {
+				gradoIn=(int) (gradoIn+grafo.getEdgeWeight(ee));
+			}
+			grado= grado+gradoOut-gradoIn;
 		}
 		return grado;
 	}
-	public Graph<Player, DefaultWeightedEdge> getGrafo(){
+
+	public SimpleDirectedWeightedGraph<Player, DefaultWeightedEdge> getGrafo() {
 		return grafo;
 	}
-	
+
+	public PremierLeagueDAO getDao() {
+		return dao;
+	}
+
+	public Map<Integer, Player> getIdMap() {
+		return idMap;
+	}
+
+	public int getNVertici() {
+		return grafo.vertexSet().size();
+	}
+	public int getNArchi() {
+		return grafo.edgeSet().size();
+	}
 }

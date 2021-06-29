@@ -3,24 +3,28 @@ package it.polito.tdp.PremierLeague.model;
 import java.util.List;
 
 public class TopPlayer {
-	private Player giocatore;
+	private Player top;
 	private List <Avversari> avversari;
-	public TopPlayer(Player giocatore, List<Avversari> avversari) {
+	public TopPlayer(Player top, List<Avversari> avversari) {
 		super();
-		this.giocatore = giocatore;
+		this.top = top;
 		this.avversari = avversari;
 	}
-	public Player getGiocatore() {
-		return giocatore;
+	public Player getTop() {
+		return top;
 	}
-	public void setGiocatore(Player giocatore) {
-		this.giocatore = giocatore;
+	public void setTop(Player top) {
+		this.top = top;
 	}
 	public List<Avversari> getAvversari() {
 		return avversari;
 	}
 	public void setAvversari(List<Avversari> avversari) {
 		this.avversari = avversari;
+	}
+	@Override
+	public String toString() {
+		return "TopPlayer = " + top + ", avversari=" + avversari.toString() + "\n";
 	}
 	
 	

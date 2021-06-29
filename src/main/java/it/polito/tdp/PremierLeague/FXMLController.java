@@ -50,48 +50,40 @@ public class FXMLController {
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	this.txtResult.clear();
-    	String gS= this.txtGoals.getText();
-    	Double goals;
+    	String gS=this.txtGoals.getText();
+    	Double goal;
     	try {
-    		goals=Double.parseDouble(gS);
+    		goal=Double.parseDouble(gS);
     	}catch(NumberFormatException e) {
-    		this.txtResult.setText("Inserisci un numero di goal valido!");
+    		this.txtResult.setText("Seleziona un numero di goals valido!");
     		return;
     	}
-    	if(gS.equals("")) {
-    		this.txtResult.setText("Compila il campo di goals!");
-    		return;
-    		
-    	}
-    	this.model.creaGrafo(goals);
+    	this.model.creaGrafo(goal);
+    	this.txtResult.appendText("Creazione grafo...\n");
     	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
     	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
-    	
     	
     }
 
     @FXML
     void doDreamTeam(ActionEvent event) {
     	this.txtResult.clear();
-    	String kS= this.txtK.getText();
-    	int k;
+    	String kS=this.txtK.getText();
+    	Integer k;
     	try {
     		k=Integer.parseInt(kS);
     	}catch(NumberFormatException e) {
-    		this.txtResult.setText("Inserisci un valore numerico valido!");
+    		this.txtResult.setText("Seleziona un numero K valido ");
     		return;
     	}
-    	if(kS==null) {
-    		this.txtResult.setText("Inserisci un valore dei goals!");
+    	if(this.model.getGrafo()==null) {
+    		this.txtResult.setText("Crea prima il grafo");
     		return;
     	}
-    	List <Player> dream= this.model.trovaComboMigliore(k);
-    	for(Player p: dream) {
-    		this.txtResult.appendText(p.toString()+"\n");
+    	List <Player> result= model.trovaDreamTeam(k);
+    	for(Player p: result) {
+    		this.txtResult.appendText(p.toString());
     	}
-    	this.txtResult.appendText("Grado titolarità: "+this.model.calcoloGrado(dream));
-    	
-    	
     	
     	
     }
@@ -99,18 +91,16 @@ public class FXMLController {
     @FXML
     void doTopPlayer(ActionEvent event) {
     	this.txtResult.clear();
-    	if(model.getGrafo()==null) {
-    		this.txtResult.setText("Devi prima creare il grafo");
+    	if(this.model.getGrafo()==null) {
+    		this.txtResult.setText("Crea prima il grafo!");
     		return;
-    		
     	}
-    	TopPlayer p= model.migliore();
-    	this.txtResult.appendText("TOP PLAYER: "+p.getGiocatore().getPlayerID()+" "+p.getGiocatore().getName()+"\n AVVERSARI BATTUTI: \n");
-    	for(Avversari a:p.getAvversari()) {
-    		this.txtResult.appendText(a.toString());
+    	TopPlayer migliore= model.migliore();
+    	this.txtResult.appendText("Top Player: "+migliore.getTop().toString()+"\n");
+    	this.txtResult.appendText("AVVERSARI:\n");
+    	for(Avversari v: migliore.getAvversari()) {
+    		this.txtResult.appendText(v.toString());
     	}
-    	
-
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete

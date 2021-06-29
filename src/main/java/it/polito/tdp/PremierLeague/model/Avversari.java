@@ -1,18 +1,18 @@
 package it.polito.tdp.PremierLeague.model;
 
-public class Avversari implements Comparable <Avversari> {
-	private Player a;
+public class Avversari implements Comparable <Avversari>{
+	private Player player;
 	private Double peso;
-	public Avversari(Player a, Double peso) {
+	public Avversari(Player player, Double peso) {
 		super();
-		this.a = a;
+		this.player = player;
 		this.peso = peso;
 	}
-	public Player getA() {
-		return a;
+	public Player getPlayer() {
+		return player;
 	}
-	public void setA(Player a) {
-		this.a = a;
+	public void setPlayer(Player player) {
+		this.player = player;
 	}
 	public Double getPeso() {
 		return peso;
@@ -27,7 +27,7 @@ public class Avversari implements Comparable <Avversari> {
 	}
 	@Override
 	public String toString() {
-		return a.getPlayerID() + " "+ a.getName() + "| "+peso + "\n";
+		return player.toString() + " =  " + peso + "\n";
 	}
 	
 	

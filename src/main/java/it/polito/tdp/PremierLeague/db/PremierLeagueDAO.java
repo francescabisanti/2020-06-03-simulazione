@@ -62,26 +62,24 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	public List <Player> getVertici (Double goal, Map <Integer, Player> idMap){
-		String sql = "SELECT  p.PlayerID as id, AVG (a.Goals) AS peso "
-				+ "FROM players p, actions a "
-				+ "WHERE p.PlayerID=a.PlayerID "
-				+ "GROUP BY p.PlayerID "
-				+ "HAVING peso> ? ";
-		List<Player> result= new ArrayList <Player>();
+	public List <Player> getVertici(Map <Integer, Player> idMap, Double goals){
+		String sql = "SELECT DISTINCT a.PlayerID AS id, AVG(a.Goals) AS peso "
+				+ "FROM actions a "
+				+ "GROUP BY a.PlayerID "
+				+ "HAVING peso>? ";
+		
 		Connection conn = DBConnect.getConnection();
-
+		List <Player> result= new ArrayList<>();
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setDouble(1,goal);
+			st.setDouble(1, goals);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
 
 				Player player = idMap.get(res.getInt("id"));
-				if(player!=null)
+				if(player!=null) {
 					result.add(player);
-				
-				
+				}
 			}
 			conn.close();
 			return result;
@@ -92,15 +90,15 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	
-	public List <Adiacenza> getAdiacenze (Double goal, Map <Integer, Player> idMap){
-		String sql = "SELECT  a1.PlayerID AS p1, a2.PlayerID AS p2, (SUM(a1.TimePlayed)-SUM(a2.TimePlayed)) AS t2 "
+	public List <Adiacenza> getAdiacenza(Map <Integer, Player> idMap, Double goals){
+		String sql = "SELECT a1.PlayerID AS p1, a2.PlayerID AS p2, SUM(a1.TimePlayed- a2.TimePlayed) AS peso "
 				+ "FROM actions a1, actions a2 "
-				+ "WHERE a1.PlayerID> a2.PlayerID AND a1.TeamID!=a2.TeamID AND a1.`Starts`=1 AND a2.`Starts`=1 AND a1.MatchID=a2.MatchID "
-				+ "GROUP BY a1.PlayerID, a2.PlayerID ";
-		List<Adiacenza> result= new ArrayList <Adiacenza>();
+				+ "WHERE a1.TeamID!= a2.TeamID AND a1.`Starts`=1 AND a2.`Starts`=1 AND a1.MatchID=a2.MatchID "
+				+ "GROUP BY a1.PlayerID, a2.PlayerID "
+				+ "HAVING peso!=0 ";
+		
 		Connection conn = DBConnect.getConnection();
-
+		List <Adiacenza> result= new ArrayList<>();
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
 			
@@ -109,20 +107,16 @@ public class PremierLeagueDAO {
 
 				Player player1 = idMap.get(res.getInt("p1"));
 				Player player2 = idMap.get(res.getInt("p2"));
-				if(player1!=null && player2!=null) {
-					double peso= res.getDouble("t2");
-					if(peso>0) {
-						Adiacenza a= new Adiacenza(player1,player2,peso);
+				if(player1!=null && player2!=null) { 
+					if(res.getDouble("peso")>0) {
+						Adiacenza a = new Adiacenza(player1, player2, res.getDouble("peso"));
 						result.add(a);
-					}
-					else if(peso<0) {
-						Adiacenza a= new Adiacenza (player2, player1, Math.abs(peso));
+						}
+					else {
+						Adiacenza a= new Adiacenza(player2, player1, Math.abs(res.getDouble("peso")));
 						result.add(a);
 					}
 				}
-					
-				
-				
 			}
 			conn.close();
 			return result;
@@ -132,5 +126,7 @@ public class PremierLeagueDAO {
 			return null;
 		}
 	}
+	
+	
 	
 }
